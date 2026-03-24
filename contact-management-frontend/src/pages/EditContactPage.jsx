@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { getContact, updateContact } from '../services/contactService.js';
+import { useToast } from '../utils/ToastContext.jsx';
 
 export default function EditContactPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const toast = useToast();
   const [form, setForm] = useState({ name: '', email: '', phone: '', address: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
@@ -57,9 +59,12 @@ export default function EditContactPage() {
         phone: form.phone.trim(),
         address: form.address.trim(),
       });
+      toast.success('Contact updated successfully');
       navigate('/contacts');
     } catch (err) {
-      setError(err.response?.data?.message || 'Could not update contact');
+      const msg = err.response?.data?.message || 'Could not update contact';
+      setError(msg);
+      toast.error(msg);
     } finally {
       setSaving(false);
     }

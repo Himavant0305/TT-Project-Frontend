@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { deleteContact, fetchContacts, searchContacts } from '../services/contactService.js';
+import { deleteContact, fetchContacts, searchContacts, toggleFavorite, exportContactsCsv } from '../services/contactService.js';
 import { fetchGroups } from '../services/groupService.js';
+import { useToast } from '../utils/ToastContext.jsx';
 import SearchBar from '../components/SearchBar.jsx';
 import Pagination from '../components/Pagination.jsx';
 import ContactTable from '../components/ContactTable.jsx';
@@ -18,6 +19,7 @@ export default function ContactsPage() {
   const [selectedGroupId, setSelectedGroupId] = useState('all');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
+  const toast = useToast();
 
   useEffect(() => {
     const t = setTimeout(() => setDebounced(query.trim()), 350);
@@ -68,9 +70,35 @@ export default function ContactsPage() {
     if (!window.confirm('Are you sure you want to delete this contact?')) return;
     try {
       await deleteContact(contact.id);
+      toast.success(`"${contact.name}" deleted`);
       await loadAll();
     } catch (e) {
-      setError(e.response?.data?.message || 'Delete failed');
+      toast.error(e.response?.data?.message || 'Delete failed');
+    }
+  };
+
+  const handleToggleFavorite = async (contact) => {
+    try {
+      const updated = await toggleFavorite(contact.id);
+      setData((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          content: prev.content.map((c) => (c.id === updated.id ? updated : c)),
+        };
+      });
+      toast.success(updated.favorite ? `★ "${contact.name}" added to favorites` : `"${contact.name}" removed from favorites`);
+    } catch (e) {
+      toast.error(e.response?.data?.message || 'Could not update favorite');
+    }
+  };
+
+  const handleExport = async () => {
+    try {
+      await exportContactsCsv();
+      toast.success('Contacts exported as CSV');
+    } catch (e) {
+      toast.error(e.response?.data?.message || 'Export failed');
     }
   };
 
@@ -99,6 +127,9 @@ export default function ContactsPage() {
       <div className="page-header-row">
         <h1 className="page-title">Contacts</h1>
         <div className="page-header-actions">
+          <button type="button" className="btn btn-ghost" onClick={handleExport}>
+            ⬇ Export CSV
+          </button>
           <Link to="/groups" className="btn btn-ghost">
             Manage groups
           </Link>
@@ -138,13 +169,14 @@ export default function ContactsPage() {
       ) : null}
 
       {loading ? (
-        <div className="loading-inline">Loading contacts?</div>
+        <div className="loading-inline">Loading contacts…</div>
       ) : (
         <>
           <div className="contacts-desktop">
             <ContactTable
               contacts={visibleContacts}
               onDelete={handleDelete}
+              onToggleFavorite={handleToggleFavorite}
               emptyMessage={
                 debounced
                   ? 'No contacts match your search.'
@@ -165,7 +197,14 @@ export default function ContactsPage() {
                     : 'No contacts yet. Add your first contact.'}
               </p>
             ) : (
-              visibleContacts.map((c) => <ContactCard key={c.id} contact={c} onDelete={handleDelete} />)
+              visibleContacts.map((c) => (
+                <ContactCard
+                  key={c.id}
+                  contact={c}
+                  onDelete={handleDelete}
+                  onToggleFavorite={handleToggleFavorite}
+                />
+              ))
             )}
           </div>
 

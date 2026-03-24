@@ -18,6 +18,7 @@ public class ContactResponse {
     private String email;
     private String phone;
     private String address;
+    private boolean favorite;
     private String ownerId;
     private Instant createdAt;
 }

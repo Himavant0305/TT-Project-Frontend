@@ -35,3 +35,22 @@ export async function updateContact(id, payload) {
 export async function deleteContact(id) {
   await api.delete(`/api/contacts/${id}`);
 }
+
+export async function toggleFavorite(id) {
+  const { data } = await api.patch(`/api/contacts/${id}/favorite`);
+  return data;
+}
+
+export async function exportContactsCsv() {
+  const { data } = await api.get('/api/contacts/export/csv', {
+    responseType: 'blob',
+  });
+  const url = window.URL.createObjectURL(new Blob([data]));
+  const link = document.createElement('a');
+  link.href = url;
+  link.setAttribute('download', 'contacts.csv');
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
+}

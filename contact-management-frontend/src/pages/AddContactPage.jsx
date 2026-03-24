@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createContact } from '../services/contactService.js';
+import { useToast } from '../utils/ToastContext.jsx';
 
 const initial = { name: '', email: '', phone: '', address: '' };
 
 export default function AddContactPage() {
   const navigate = useNavigate();
+  const toast = useToast();
   const [form, setForm] = useState(initial);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -33,9 +35,12 @@ export default function AddContactPage() {
         phone: form.phone.trim(),
         address: form.address.trim(),
       });
+      toast.success('Contact created successfully');
       navigate('/contacts');
     } catch (err) {
-      setError(err.response?.data?.message || 'Could not create contact');
+      const msg = err.response?.data?.message || 'Could not create contact';
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }

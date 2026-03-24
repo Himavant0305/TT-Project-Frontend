@@ -23,4 +23,6 @@ public interface ContactRepository extends MongoRepository<Contact, String> {
 
     @Query("{ 'ownerId': ?0, $or: [ { 'name': { $regex: ?1, $options: 'i' } }, { 'email': { $regex: ?1, $options: 'i' } } ] }")
     Page<Contact> searchByOwnerId(String ownerId, String regexPattern, Pageable pageable);
+
+    boolean existsByOwnerIdAndEmailIgnoreCase(String ownerId, String email);
 }

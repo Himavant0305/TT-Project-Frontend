@@ -30,6 +30,9 @@ public class Contact {
 
     private String address;
 
+    @Builder.Default
+    private boolean favorite = false;
+
     @Indexed
     private String ownerId;
 

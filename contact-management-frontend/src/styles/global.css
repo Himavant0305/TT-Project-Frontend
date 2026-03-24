@@ -1060,3 +1060,106 @@ a:hover {
     grid-template-columns: 1fr;
   }
 }
+
+/* Toast Notifications */
+.toast-container {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  max-width: 420px;
+  width: calc(100% - 2rem);
+  pointer-events: none;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.85rem 1rem;
+  border-radius: 14px;
+  backdrop-filter: blur(16px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255,255,255,0.08);
+  animation: toast-slide-in 0.35s ease-out;
+  pointer-events: auto;
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+
+@keyframes toast-slide-in {
+  from { opacity: 0; transform: translateX(100px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.toast-success {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.92), rgba(5, 150, 105, 0.88));
+  color: #fff;
+  border-left: 4px solid #34d399;
+}
+
+.toast-error {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.92), rgba(220, 38, 38, 0.88));
+  color: #fff;
+  border-left: 4px solid #f87171;
+}
+
+.toast-info {
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.92), rgba(29, 78, 216, 0.88));
+  color: #fff;
+  border-left: 4px solid #60a5fa;
+}
+
+.toast-icon {
+  font-size: 1.15rem;
+  font-weight: 800;
+  flex-shrink: 0;
+  width: 1.5rem;
+  text-align: center;
+}
+
+.toast-message {
+  flex: 1;
+  min-width: 0;
+}
+
+.toast-close {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: #fff;
+  font-size: 1.1rem;
+  cursor: pointer;
+  border-radius: 50%;
+  width: 1.6rem;
+  height: 1.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+
+.toast-close:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+/* Star / Favorite button */
+.btn-star {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.25rem;
+  padding: 0.15rem;
+  transition: transform 0.2s;
+  line-height: 1;
+}
+
+.btn-star:hover {
+  transform: scale(1.2);
+}
+
+.btn-star .star-empty { color: var(--color-muted); }
+.btn-star .star-filled { color: #fbbf24; filter: drop-shadow(0 1px 4px rgba(251, 191, 36, 0.5)); }
+

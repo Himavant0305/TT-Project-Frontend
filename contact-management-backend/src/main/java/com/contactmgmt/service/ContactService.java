@@ -4,6 +4,7 @@ import com.contactmgmt.dto.ContactRequest;
 import com.contactmgmt.dto.ContactResponse;
 import com.contactmgmt.dto.DashboardStatsResponse;
 import com.contactmgmt.dto.PagedContactsResponse;
+import com.contactmgmt.exception.DuplicateResourceException;
 import com.contactmgmt.exception.ResourceNotFoundException;
 import com.contactmgmt.model.Contact;
 import com.contactmgmt.repository.ContactGroupRepository;
@@ -25,6 +26,11 @@ public class ContactService {
     private final ContactGroupRepository groupRepository;
 
     public ContactResponse create(String ownerId, ContactRequest request) {
+        // Duplicate detection
+        if (contactRepository.existsByOwnerIdAndEmailIgnoreCase(ownerId, request.getEmail().trim())) {
+            throw new DuplicateResourceException("A contact with this email already exists");
+        }
+
         Contact contact = Contact.builder()
                 .name(request.getName().trim())
                 .email(request.getEmail().trim())
@@ -58,10 +64,25 @@ public class ContactService {
     public ContactResponse update(String ownerId, String id, ContactRequest request) {
         Contact contact = contactRepository.findByIdAndOwnerId(id, ownerId)
                 .orElseThrow(() -> new ResourceNotFoundException("Contact not found"));
+
+        // Duplicate detection (skip if email unchanged)
+        String newEmail = request.getEmail().trim();
+        if (!contact.getEmail().equalsIgnoreCase(newEmail)
+                && contactRepository.existsByOwnerIdAndEmailIgnoreCase(ownerId, newEmail)) {
+            throw new DuplicateResourceException("A contact with this email already exists");
+        }
+
         contact.setName(request.getName().trim());
-        contact.setEmail(request.getEmail().trim());
+        contact.setEmail(newEmail);
         contact.setPhone(request.getPhone().trim());
         contact.setAddress(request.getAddress() != null ? request.getAddress().trim() : "");
+        return toResponse(contactRepository.save(contact));
+    }
+
+    public ContactResponse toggleFavorite(String ownerId, String id) {
+        Contact contact = contactRepository.findByIdAndOwnerId(id, ownerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Contact not found"));
+        contact.setFavorite(!contact.isFavorite());
         return toResponse(contactRepository.save(contact));
     }
 
@@ -76,6 +97,23 @@ public class ContactService {
             groupRepository.save(group);
         });
         contactRepository.delete(contact);
+    }
+
+    public String exportCsv(String ownerId) {
+        List<Contact> all = contactRepository.findByOwnerId(ownerId,
+                org.springframework.data.domain.PageRequest.of(0, 10000,
+                        org.springframework.data.domain.Sort.by("name"))).getContent();
+        StringBuilder sb = new StringBuilder();
+        sb.append("Name,Email,Phone,Address,Favorite\n");
+        for (Contact c : all) {
+            sb.append(csvEscape(c.getName())).append(',')
+              .append(csvEscape(c.getEmail())).append(',')
+              .append(csvEscape(c.getPhone())).append(',')
+              .append(csvEscape(c.getAddress())).append(',')
+              .append(c.isFavorite() ? "Yes" : "No")
+              .append('\n');
+        }
+        return sb.toString();
     }
 
     public DashboardStatsResponse dashboardStats(String ownerId) {
@@ -107,8 +145,18 @@ public class ContactService {
                 .email(c.getEmail())
                 .phone(c.getPhone())
                 .address(c.getAddress())
+                .favorite(c.isFavorite())
                 .ownerId(c.getOwnerId())
                 .createdAt(c.getCreatedAt())
                 .build();
     }
+
+    private String csvEscape(String val) {
+        if (val == null) return "";
+        if (val.contains(",") || val.contains("\"") || val.contains("\n")) {
+            return "\"" + val.replace("\"", "\"\"") + "\"";
+        }
+        return val;
+    }
 }
+
