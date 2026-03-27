@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: contact-management-backend
+    runtime: java
+    rootDir: contact-management-backend
+    plan: free
+    buildCommand: bash mvnw clean package -DskipTests
+    startCommand: java -jar target/contact-management-backend-1.0.0.jar
+    healthCheckPath: /health
+    envVars:
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: ALLOWED_ORIGINS
+        sync: false

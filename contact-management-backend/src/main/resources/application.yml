@@ -8,13 +8,15 @@ spring:
       auto-index-creation: true
 
 server:
-  port: 8080
+  port: ${PORT:8080}
 
 app:
   jwt:
     # Min 32 bytes for HS256; override in production via JWT_SECRET
     secret: ${JWT_SECRET:ChangeThisDevelopmentJwtSecretKey32B}
     expiration-ms: 86400000
+  cors:
+    allowed-origins: ${ALLOWED_ORIGINS:http://localhost:5173,http://127.0.0.1:5173}
 
 logging:
   level:
